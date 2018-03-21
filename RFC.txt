@@ -1,0 +1,120 @@
+RFC for SPX (Space X) protocol:
+
+Here are the SPX commands valid in the PLAY state:
+
+
+EXIT
+
+		Arguments: none
+
+		Restrictions:
+             client needs to be connected
+
+         Discussion:
+             The server updates its list of connected clients.
+
+         Possible Responses:
+             +OK
+
+         Examples:
+             C: EXIT
+             S: +OK Exiting server..
+		
+		
+PAUSE
+
+		Arguments: none
+
+		Restrictions:
+             Client's can't be already paused
+
+         Discussion:
+             Broadcoast the information to the other clients connected to the server
+
+         Possible Responses:
+             +OK
+			 +NOK (Robot is in pause)
+
+         Examples:
+            
+			 
+UNPAUSE
+
+		Arguments: none
+
+		Restrictions:
+             Robot can't be already UNpaused
+
+         Discussion:
+             Ask if the server is paused
+
+         Possible Responses:
+             +OK
+
+         Examples:
+             
+			 
+STATUS
+
+		Arguments: none
+
+		Restrictions:
+             Robot can't be already UNpaused
+
+         Discussion:
+             Ask if the server is paused
+
+         Possible Responses:
+             +OK
+
+         Examples:
+
+		 
+PSEUDO newPseudo
+	 
+		Arguments: 
+			-newPseudo: New pseudo the client want to switch to
+
+		Restrictions:
+             Pseudo cannot be already used by another client
+			 Pseudo can't contain spaces, or non alphanumeric characters
+
+        Discussion:
+			The server updates its clients list with the new pseudo
+             
+        Possible Responses:
+             +OK
+			 +TAKEN
+			 +INVALID
+
+        Examples:
+             C1: PSEUDO ai#ç&_'é&
+             S: +INVALID			 
+			 C1: PSEUDO alex
+			 S: +OK
+			 C2: PSEUDO alex
+			 S: +TAKEN
+			 
+SEND file
+
+		Arguments: 
+			-file: File to be sent to the client
+
+		Restrictions:
+             File 
+
+        Discussion:
+			The server updates its clients list with the new pseudo
+             
+        Possible Responses:
+             +OK
+			 +TAKEN
+			 +INVALID
+
+        Examples:
+             C1: PSEUDO ai#ç&_'é&
+             S: +INVALID			 
+			 C1: PSEUDO alex
+			 S: +OK
+			 C2: PSEUDO alex
+			 S: +TAKEN
