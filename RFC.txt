@@ -1,8 +1,29 @@
+TODO: 
+
+States?
+Coplete missing blanks
+Exemple de session
+Format with LaTex (2nd try)
+
+
+---------------------------------------------------------------------------
+
 RFC for SPX (Space X) protocol:
 
 Here are the SPX commands valid in the PLAY state:
 
+SPX Command Summary
 
+      Minimal SPX Commands:
+
+         EXIT
+		 PAUSE
+		 RESUME
+		 STATUS
+		 PSEUDO pseudo
+		 SEND file pseudo
+
+		 
 EXIT
 
 		Arguments: none
@@ -33,12 +54,12 @@ PAUSE
 
          Possible Responses:
              +OK
-			 +NOK (Robot is in pause)
+			 -NOK (Robot is in pause)
 
          Examples:
             
 			 
-UNPAUSE
+RESUME
 
 		Arguments: none
 
@@ -53,7 +74,8 @@ UNPAUSE
 
          Examples:
              
-			 
+			 C: RESUME
+			 S: +OK
 STATUS
 
 		Arguments: none
@@ -68,6 +90,10 @@ STATUS
              +OK
 
          Examples:
+			C: STATUS
+			S: 1. Alex X:15 Y:26 Salt: 4 Sulfur: 10 Cesium: 20
+			   2. Solen X:19 Y:22 Salt: 8 Sulfur: 0 Cesium: 69
+			   3. Guillaume X:15 Y:26 Salt: 25 Sulfur: 10 Cesium: 47
 
 		 
 PSEUDO newPseudo
@@ -84,18 +110,18 @@ PSEUDO newPseudo
              
         Possible Responses:
              +OK
-			 +TAKEN
-			 +INVALID
+			 -TAKEN
+			 -INVALID
 
         Examples:
              C1: PSEUDO ai#ç&_'é&
-             S: +INVALID			 
+             S: -INVALID			 
 			 C1: PSEUDO alex
 			 S: +OK
 			 C2: PSEUDO alex
-			 S: +TAKEN
+			 S: -TAKEN
 			 
-SEND file
+SEND file pseudo 
 
 		Arguments: 
 			-file: File to be sent to the client
@@ -104,17 +130,19 @@ SEND file
              File 
 
         Discussion:
-			The server updates its clients list with the new pseudo
+			The server is interrogated
              
         Possible Responses:
-             +OK
-			 +TAKEN
-			 +INVALID
+             +AWREQ : Awaiting target client request
+			 -DENIED: Client denied P2P, terminating operation..
+			 +ACCEPTED: Client accepted P2P, commencing transfer..
+			 //+SENT: File sent to <client>
 
         Examples:
-             C1: PSEUDO ai#ç&_'é&
-             S: +INVALID			 
-			 C1: PSEUDO alex
-			 S: +OK
-			 C2: PSEUDO alex
-			 S: +TAKEN
+             C1: SEND test.bin Solen
+             S: +AWREQ
+			 C2: ACCEPT
+			 S: +ACCEPTED
+			 <P2P transaction>
+			 (S can't throw SENT since P2P?)
+			 
