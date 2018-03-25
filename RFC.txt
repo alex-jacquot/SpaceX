@@ -42,22 +42,9 @@ Table of Contents
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 Ducoeur, et al.              Standards Track                    [Page 1]
 
-RFC nnnn                           SPX                        March 2018
+RFC 9999                           SPX                        March 2018
 
 
 1. Introduction
@@ -148,6 +135,9 @@ RFC nnnn                           SPX                        March 2018
    the client will be able to issue any of the following commands
    repeatedly. After each command, the Space X server issues a response.
    The EXPLORATION State ends when the client issue the EXIT command.
+   The server refreshes every 1000 milliseconds.
+   When the server doesn't receive packages from the client for 10000 milliseconds,
+   the client is considered to be in timeout and its robot is removed
 
    Here are the SPX commands valid in the EXPLORATION state:
 
@@ -174,6 +164,25 @@ Ducoeur, et al.              Standards Track                    [Page 3]
 
 RFC nnnn                           SPX                        March 2018
 
+
+	 SELECT x y
+		
+		Arguments: x and y coordinates of the case to select
+
+         Restrictions:
+            Can only be used while in the SELECTION state
+
+         Discussion:
+            Interrogates te server to see if the spot is valid, free, and then place a robot here
+
+         Possible Responses:
+            +OK
+			-OOB (OUT OF BOUNDS)
+			-TAKEN
+
+         Examples:
+            C: SELECT 
+            S: +OK
 
      RESUME
 
@@ -214,12 +223,12 @@ RFC nnnn                           SPX                        March 2018
 
       PSEUDO newPseudo
 
-		       Arguments:
-			      -newPseudo: New pseudo the client want to switch to
+		 Arguments:
+			-newPseudo: New pseudo the client want to switch to
 
-	   	    Restrictions:
+	   	 Restrictions:
             Pseudo cannot be already used by another client
-			      Pseudo can't contain spaces, or non alphanumeric characters
+			Pseudo can't contain spaces, or non alphanumeric characters
 
          Discussion:
 			      The server updates its clients list with the new pseudo
@@ -241,10 +250,10 @@ RFC nnnn                           SPX                        March 2018
          Examples:
             C1: PSEUDO ai#�&_'�&
             S: -INVALID
-			      C1: PSEUDO alex
-			      S: +OK
-			      C2: PSEUDO alex
-			      S: -TAKEN
+			C1: PSEUDO alex
+			S: +OK
+			C2: PSEUDO alex
+			S: -TAKEN
 
       SEND file pseudo
 
