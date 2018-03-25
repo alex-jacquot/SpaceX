@@ -1,148 +1,272 @@
-TODO: 
-
-States?
-Coplete missing blanks
-Exemple de session
-Format with LaTex (2nd try)
 
 
----------------------------------------------------------------------------
 
-RFC for SPX (Space X) protocol:
 
-Here are the SPX commands valid in the PLAY state:
 
-SPX Command Summary
 
-      Minimal SPX Commands:
+Network Working Group                                         G. Ducoeur
+Request for Comments: nnnn                                    A. Jacquot
+Category: Standards Track                                      S. Pensel
+                                                            N. Gillibert
+                                                                L3 MIASHS
+                                                              March 2018
 
-         EXIT
-		 PAUSE
-		 RESUME
-		 STATUS
-		 PSEUDO pseudo
-		 SEND file pseudo
 
-		 
-EXIT
+                           Space X protocol:
 
-		Arguments: none
+Status of this Memo
 
-		Restrictions:
-             client needs to be connected
+   This document specifies an Internet standards track protocol for the
+   Internet community, and requests discussion and suggestions for
+   improvements.  Please refer to the current edition of the "Internet
+   Official Protocol Standards" (STD 1) for the standardization state
+   and status of this protocol.  Distribution of this memo is unlimited.
 
-         Discussion:
-             The server updates its list of connected clients.
+Table of Contents
+
+   1. Introduction ................................................    2
+   2. Basic Operation .............................................    2
+   3. The LOGIN State .............................................    2
+      EXIT Command ................................................    3
+   4. The SELECTION State .........................................    3
+   5.The EXPLORATION State ........................................    3
+      PAUSE Command ...............................................    3
+      RESUME Command ..............................................    4
+      STATUS Command ..............................................    4
+      PSEUDO Command ..............................................    4
+      SEND Command ................................................    5
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Ducoeur, et al.              Standards Track                    [Page 1]
+
+RFC nnnn                           SPX                        March 2018
+
+
+1. Introduction
+
+   This document will state the way for clients to connect to the
+   Space X server and for this one to communicate with them through TCP.
+
+   Space X is robot behavior simulator, the client choose where to start
+   on a map containing resources (1 robot/client). Then, the robot start
+   exploring the map and indicate his position and the resources taken.
+
+2. Basic Operation
+
+   The server host starts the Space X service by listening on TCP port
+   5555. When a client host wishes to make use of the service,
+   it establishes a TCP connection with the server host.  When the
+   connection is established, the Space X server sends a greeting.  The
+   client and Space X server then exchange commands and responses
+   (respectively) until the connection is closed or aborted.
+
+    Commands in Space X consist of keyword followed possibly by one or
+    more arguments. Keywords and arguments consist of printable ASCII
+   characters.  Keywords and arguments are each separated by a single
+   SPACE character.  Keywords are up to 6 characters long. Each
+   argument may be up to 40 characters long.
+
+   Responses in Space X consist of a status indicator and a keyword
+   possibly followed by additional information. Responses may be up to
+   512 characters long.
+
+   Once the TCP connection has been opened and the Space X server has
+   sent the greeting, the session enters the LOGIN state. In this state,
+   the client must enter a unique name. Once done so, the session enters
+   the SELECTION state. The Space X server send a map, and the player
+   must choose which case to start on the map. When the client has
+   chosen a valid case, the session enters the EXPLORATION state, where
+   the client will be able to issue commands.
+
+
+3. The LOGIN state
+
+   Once the TCP Connection has been opened by a Space X client, the
+   Space X server issues a one line greeting. Example :
+
+      S: +OK SPX serv ready
+
+   The Space X session is now in LOGIN state. The client must now enter
+   a name not already taken by another client on the server. If the name
+   is already taken, the server responds with a negative status
+   indicator.
+
+
+
+
+Ducoeur, et al.              Standards Track                    [Page 2]
+
+RFC nnnn                           SPX                        March 2018
+
+
+   Here is the summary for the EXIT command when used in the LOGIN
+   state:
+
+      EXIT
+
+         Arguments: none
+
+         Restrictions: none
 
          Possible Responses:
-             +OK
+            +OK
 
          Examples:
-             C: EXIT
-             S: +OK Exiting server..
-		
-		
-PAUSE
+            C: EXIT
+            S: +OK Exiting server..
 
-		Arguments: none
+4. The SELECTION State
 
-		Restrictions:
-             Client's can't be already paused
+   Once the client's name has been validate, the Space X session is now
+  in the SELECTION state. The Space X server send a map to the client,
+  he then has to choose a case on the map. If the case is not valid, the
+  server sends an appropriate error message. The SELECTION state end
+  when the client choose a valid case or when the client issue the EXIT
+  command.
+
+5. The EXPLORATION State
+
+   Once the client has chosen a correct name and selected where to start
+   the client will be able to issue any of the following commands
+   repeatedly. After each command, the Space X server issues a response.
+   The EXPLORATION State ends when the client issue the EXIT command.
+
+   Here are the SPX commands valid in the EXPLORATION state:
+
+      PAUSE
+
+         Arguments: none
+
+         Restrictions:
+            Client's can't be already paused
 
          Discussion:
-             Broadcoast the information to the other clients connected to the server
+            Broadcoast the information to the other clients connected to the server
 
          Possible Responses:
-             +OK
-			 -NOK (Robot is in pause)
+            +OK
+            -NOK (Robot is in pause)
 
-         Examples:
-            
-			 
-RESUME
 
-		Arguments: none
 
-		Restrictions:
-             Robot can't be already UNpaused
+
+
+
+Ducoeur, et al.              Standards Track                    [Page 3]
+
+RFC nnnn                           SPX                        March 2018
+
+
+     RESUME
+
+         Arguments: none
+
+         Restrictions:
+            Robot can't be already UNpaused
 
          Discussion:
-             Ask if the server is paused
+            Ask if the server is paused
 
          Possible Responses:
-             +OK
+            +OK
 
          Examples:
-             
-			 C: RESUME
-			 S: +OK
-STATUS
+            C: RESUME
+            S: +OK
 
-		Arguments: none
+      STATUS
 
-		Restrictions:
-             Robot can't be already UNpaused
+         Arguments: none
+
+         Restrictions:
+            Robot can't be already UNpaused
 
          Discussion:
-             Ask if the server is paused
+            Ask if the server is paused
 
          Possible Responses:
-             +OK
+            +OK
 
          Examples:
-			C: STATUS
-			S: 1. Alex X:15 Y:26 Salt: 4 Sulfur: 10 Cesium: 20
-			   2. Solen X:19 Y:22 Salt: 8 Sulfur: 0 Cesium: 69
-			   3. Guillaume X:15 Y:26 Salt: 25 Sulfur: 10 Cesium: 47
+            C: STATUS
+            S: 1. Alex X:15 Y:26 Salt: 4 Sulfur: 10 Cesium: 20
+            2. Solen X:19 Y:22 Salt: 8 Sulfur: 0 Cesium: 69
+            3. Guillaume X:15 Y:26 Salt: 25 Sulfur: 10 Cesium: 47
 
-		 
-PSEUDO newPseudo
-	 
-		Arguments: 
-			-newPseudo: New pseudo the client want to switch to
 
-		Restrictions:
-             Pseudo cannot be already used by another client
-			 Pseudo can't contain spaces, or non alphanumeric characters
+      PSEUDO newPseudo
 
-        Discussion:
-			The server updates its clients list with the new pseudo
-             
-        Possible Responses:
-             +OK
-			 -TAKEN
-			 -INVALID
+		       Arguments:
+			      -newPseudo: New pseudo the client want to switch to
 
-        Examples:
-             C1: PSEUDO ai#ç&_'é&
-             S: -INVALID			 
-			 C1: PSEUDO alex
-			 S: +OK
-			 C2: PSEUDO alex
-			 S: -TAKEN
-			 
-SEND file pseudo 
+	   	    Restrictions:
+            Pseudo cannot be already used by another client
+			      Pseudo can't contain spaces, or non alphanumeric characters
 
-		Arguments: 
-			-file: File to be sent to the client
+         Discussion:
+			      The server updates its clients list with the new pseudo
 
-		Restrictions:
-             File 
 
-        Discussion:
-			The server is interrogated
-             
-        Possible Responses:
-             +AWREQ : Awaiting target client request
-			 -DENIED: Client denied P2P, terminating operation..
-			 +ACCEPTED: Client accepted P2P, commencing transfer..
-			 //+SENT: File sent to <client>
 
-        Examples:
-             C1: SEND test.bin Solen
-             S: +AWREQ
-			 C2: ACCEPT
-			 S: +ACCEPTED
-			 <P2P transaction>
-			 (S can't throw SENT since P2P?)
-			 
+
+
+Ducoeur, et al.              Standards Track                    [Page 4]
+
+RFC nnnn                           SPX                        March 2018
+
+
+         Possible Responses:
+            +OK
+            -TAKEN
+            -INVALID
+
+         Examples:
+            C1: PSEUDO ai#ï¿½&_'ï¿½&
+            S: -INVALID
+			      C1: PSEUDO alex
+			      S: +OK
+			      C2: PSEUDO alex
+			      S: -TAKEN
+
+      SEND file pseudo
+
+         Arguments:
+            -file: File to be sent to the client
+			-pseudo: Pseudo of the client to send the file to
+
+         Restrictions:
+            File
+
+         Discussion:
+            The server is interrogated
+
+         Possible Responses:
+            +AWREQ : Awaiting target client request
+			-DENIED: Client denied P2P, terminating operation..
+			+ACCEPTED: Client accepted P2P, commencing transfer..
+			      //+SENT: File sent to <client>
+
+         Examples:
+            C1: SEND test.bin Solen
+            S: +AWREQ
+            C2: ACCEPT
+            S: +ACCEPTED
+            <P2P transaction>
