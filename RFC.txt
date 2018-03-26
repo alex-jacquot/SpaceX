@@ -204,13 +204,14 @@ RFC nnnn                           SPX                        March 2018
 
       STATUS
 
-         Arguments: none
+         Arguments: None
 
          Restrictions:
-            Robot can't be already UNpaused
+            None
 
          Discussion:
-            Ask if the server is paused
+            Ask informations
+			Send back string
 
          Possible Responses:
             +OK
@@ -244,13 +245,10 @@ RFC nnnn                           SPX                        March 2018
 
 
          Possible Responses:
-            +OK
-            -TAKEN
-            -INVALID
+            +OK : 100
+            -TAKEN : 210
 
          Examples:
-            C1: PSEUDO ai#�&_'�&
-            S: -INVALID
 			C1: PSEUDO alex
 			S: +OK
 			C2: PSEUDO alex
@@ -263,15 +261,16 @@ RFC nnnn                           SPX                        March 2018
 			-pseudo: Pseudo of the client to send the file to
 
          Restrictions:
-            File
+            File must exists
+			
 
          Discussion:
             The server is interrogated
 
          Possible Responses:
-            +AWREQ : Awaiting target client request
-			-DENIED: Client denied P2P, terminating operation..
-			+ACCEPTED: Client accepted P2P, commencing transfer..
+            +AWREQ : Awaiting target client request : 200
+			-DENIED: Client denied P2P, terminating operation.. : 230
+			+ACCEPTED: Client accepted P2P, commencing transfer.. : 100
 			      //+SENT: File sent to <client>
 
          Examples:
@@ -281,5 +280,19 @@ RFC nnnn                           SPX                        March 2018
             S: +ACCEPTED
             <P2P transaction>
 
-MAP Format
+			
+MAP
+
+Every time the server updates its map, it broadcoasts the current position of all robot for the clients.
+Format: Send a string with all the coordinates of the robots present in the arena separated by ";"
+Ex: "(2,2);(5,4);(8,9)" for 3 robots
+
+
+ROBOT DIRECTION
+
+The robot's position is determined randomly by the server every second.
+The robot move one free case, that can't be out of bounds that will be occupied by another robot (but can go where a robot currently is since that robot would have to move too).
+If a robot can't go any direction he won't move for the time.
+Every time the robot moves, he will get 1 random resource.
+
 
