@@ -1,0 +1,457 @@
+
+
+
+
+
+
+Network Working Group                                         G. Ducoeur
+Request for Comments: nnnn                                    A. Jacquot
+Category: Standards Track                                      S. Pensel
+                                                            N. Gillibert
+                                                                L3 MIASHS
+                                                              March 2018
+
+
+                           Space X protocol:
+
+Status of this Memo
+
+   This document specifies an Internet standards track protocol for the
+   Internet community, and requests discussion and suggestions for
+   improvements.  Please refer to the current edition of the "Internet
+   Official Protocol Standards" (STD 1) for the standardization state
+   and status of this protocol.  Distribution of this memo is unlimited.
+
+Table of Contents
+
+   1. Introduction ................................................    2
+   2. Basic Operation .............................................    2
+   3. The LOGIN State .............................................    2
+      EXIT Command ................................................    3
+      NAME Command ................................................    3
+   4. The SELECTION State .........................................    3
+      SELECT Command ..............................................    3
+   5. The EXPLORATION State .......................................    4
+      PAUSE Command ...............................................    4
+      RESUME Command ..............................................    4
+      STATUS Command ..............................................    5
+      PSEUDO Command ..............................................    5
+      SEND Command ................................................    6
+      MOVE Command ................................................    7
+   6. MAP Format ..................................................    7
+   7. SPX Response Status Code ....................................    7
+   8. Example SPX Session .........................................    8
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Ducoeur, et al.              Standards Track                    [Page 1]
+
+RFC nnnn                           SPX                        March 2018
+
+
+1. Introduction
+
+   This document will state the way for clients to connect to the
+   Space X server and for this one to communicate with them through TCP.
+
+   Space X is robot behavior simulator, the client choose where to start
+   on a map containing resources (1 robot/client). Then, the robot start
+   exploring the map and indicate his position and the resources taken.
+
+2. Basic Operation
+
+   The server host starts the Space X service by listening on TCP port
+   5555. When a client host wishes to make use of the service,
+   it establishes a TCP connection with the server host.  When the
+   connection is established, the Space X server sends a greeting.  The
+   client and Space X server then exchange commands and responses
+   (respectively) until the connection is closed or aborted.
+
+    Commands in Space X consist of keyword followed possibly by one or
+    more arguments. Keywords and arguments consist of printable ASCII
+   characters.  Keywords and arguments are each separated by a single
+   SPACE character.  Keywords are up to 6 characters long. Each
+   argument may be up to 40 characters long.
+
+   Responses in Space X consist of a status indicator and a keyword
+   possibly followed by additional information. Responses may be up to
+   512 characters long.
+
+   Once the TCP connection has been opened and the Space X server has
+   sent the greeting, the session enters the LOGIN state. In this state,
+   the client must enter a unique name. Once done so, the session enters
+   the SELECTION state. The Space X server send a map, and the player
+   must choose which case to start on the map. When the client has
+   chosen a valid case, the session enters the EXPLORATION state, where
+   the client will be able to issue commands.
+
+3. The LOGIN state
+
+   Once the TCP Connection has been opened by a Space X client, the
+   Space X server issues a one line status code and a greeting. Example:
+
+      S: +OK 100 SPX serv ready
+
+   The Space X session is now in LOGIN state. The client must now enter
+   a name not already taken by another client on the server. If the name
+   is already taken, the server responds with a negative status
+   indicator.
+
+
+
+
+
+Ducoeur, et al.              Standards Track                    [Page 2]
+
+RFC nnnn                           SPX                        March 2018
+
+
+   Here is the summary for the NAME command:
+
+      NAME string
+
+         Arguments:
+            a string which will define the name of the client
+
+         Restriction:
+            cannot be already taken
+
+         Discussion:
+            As long as the command QUIT is not issued, the server will
+            continue to ask for a valid name. If the response from the
+            server is positive, the server will send a string stating
+            the client's chosen name.
+
+         Possible Responses:
+            101 Your name is ...
+            200 Name taken
+
+         Examples:
+            C: NAME me
+            S: 101 Your name is me
+
+   Here is the summary for the EXIT command when used in the LOGIN
+   state:
+
+      EXIT
+
+         Arguments: none
+
+         Restrictions: none
+
+         Possible Responses:
+            100 Exiting
+
+         Examples:
+            C: EXIT
+            S: 100 Exiting server..
+
+4. The SELECTION State
+
+   Once the client's name has been validate, the Space X session is now
+  in the SELECTION state. The Space X server send a map to the client,
+  he then has to choose a case on the map. If the case is not valid, the
+  server sends an appropriate error message. The SELECTION state end
+  when the client choose a valid case or when the client issue the EXIT
+  command.
+
+
+
+
+Ducoeur, et al.              Standards Track                    [Page 3]
+
+RFC nnnn                           SPX                        March 2018
+
+
+  Here is the summary for the SELECT command:
+
+      SELECT x y
+
+         Arguments: x and y coordinates of the case to select
+
+         Restrictions:
+            Can only be used while in the SELECTION state
+
+      Discussion:
+         Asks the server for a valid or free spot then place a robot
+         here. The x and y are int.
+
+      Possible Responses:
+         101 Placed on x y
+         201 Out of bound
+         200 Already taken
+
+     Examples:
+        C: SELECT 2 3
+        S: 101 Placed on 2 3
+
+5. The EXPLORATION State
+
+   Once the client has chosen a correct name and selected where to start
+   the client will be able to issue any of the following commands
+   repeatedly. After each command, the Space X server issues a response.
+   The EXPLORATION State ends when the client issue the EXIT command.
+   The server refreshes every 1000 milliseconds.
+   When the server doesn't receive packages from the client for 10000
+   milliseconds, the client is considered to be in timeout and its robot
+   is removed.
+
+   Here are the SPX commands valid in the EXPLORATION state:
+
+      PAUSE
+
+         Arguments: none
+
+         Restrictions:
+            client's can't be already paused
+
+         Discussion:
+            The robot will switch to pause mode, and will not be allowed
+            to move until he switch back to unpaused mode using resume.
+            While paused, other robots can occupy the paused robot's
+            case.
+
+
+
+
+
+Ducoeur, et al.              Standards Track                    [Page 4]
+
+RFC nnnn                           SPX                        March 2018
+
+
+        Possible Responses:
+           100 Paused
+           200 Already paused
+
+
+      RESUME
+
+         Arguments: none
+
+         Restrictions:
+            robot cannot be already unpaused, there cannot be a robot
+            on its case while switching from paused to unpaused
+
+         Discussion:
+            The server will turn back the robot to unpaused, meaning it
+            can move again. If an unpaused player occupy the case where
+            it is paused, the robot can't unpause, and the server will
+            replies with a negative response.
+            Note that there can be multiple paused robots on the same
+            case.
+
+         Possible Responses:
+            100 Resume
+            200 Not paused
+
+         Examples:
+            C: RESUME
+            S: 100 Resume
+
+      STATUS
+
+         Arguments: None
+
+         Restrictions:
+            None
+
+         Discussion:
+            Ask informations
+		       	Send back string
+
+         Possible Responses:
+            100
+
+         Examples:
+            C: STATUS
+            S: 100 1. Alex X:15 Y:26 Salt: 4 Sulfur: 10 Cesium: 20
+                   2. Solen X:19 Y:22 Salt: 8 Sulfur: 0 Cesium: 69
+                   3. Guillaume X:15 Y:26 Salt: 25 Sulfur: 10 Cesium: 47
+
+
+
+
+Ducoeur, et al.              Standards Track                    [Page 5]
+
+RFC nnnn                           SPX                        March 2018
+
+      PSEUDO newPseudo
+
+         Arguments:
+            -newPseudo: New pseudo the client want to switch to
+
+         Restrictions:
+            Pseudo cannot be already used by another client
+            Pseudo can't contain spaces, or non alphanumeric characters
+
+         Discussion:
+            The server updates its clients list with the new pseudo
+
+         Possible Responses:
+            100 Changed
+            200 Taken
+
+         Examples:
+            C1: PSEUDO alex
+			      S: 100 Changed
+            C2: PSEUDO alex
+			      S: 200 Taken
+
+      SEND file pseudo
+
+         Arguments:
+            -file: File to be sent to the client
+			      -pseudo: Pseudo of the client to send the file to
+
+         Restrictions:
+            File must exists
+
+         Discussion:
+            The server is interrogated
+
+         Possible Responses:
+            102 Awaiting target client request
+			      202 Client denied P2P, terminating operation..
+			      100 Client accepted P2P, commencing transfer..
+
+
+         Examples:
+            C1: SEND test.bin Solen
+            S: 102  Awaiting target client request
+            C2: ACCEPT
+            S: 100 Client accepted P2P, commencing transfer..
+            <P2P transaction>
+
+
+
+
+
+
+
+Ducoeur, et al.              Standards Track                    [Page 6]
+
+RFC nnnn                           SPX                        March 2018
+
+
+      MOVE
+
+         Arguments: none
+
+         Restrictions:
+            the robot can't be paused or can't be blocked
+
+         Discussion:
+            A robot can't go to an occupied case. If a robot cannot move
+            in any direction, he will not move. If the response from the
+            server is positive, the server will send to the client a
+            string containing his robot's position and the resources
+            on the case where his robot moved. The client cannot decide
+            whether his robot will go up, down, left or right.
+
+         Possible responses:
+            100 moved to (x,y) , z resources on your location
+            202 cannot move
+
+         Example:
+            C: PAUSE
+            C: MOVE
+            S: 202 cannot move
+
+6. Map Format
+
+   Every time the server updates its map, it broadcasts the current
+   position of all robot for the clients.
+   Format: Send a string with all the coordinates of the robots present
+   in the area separated by ";"
+   An example for 3 robots:
+
+      S: "(2,2);(5,4);(8,9)"
+
+  Each second the map collect all the MOVE command issued by the
+  clients, validate or not their movement,  change the emplacement of
+  all the robot witch had their movement validate then send back a map
+  to all the connected clients.
+
+7. SPX Response Status Code
+
+   The response status code are replied to the client whenever he issues
+   a command, it consists of a three digit integer.
+
+   Followed by the status code are a brief description of what went
+   wrong, but the client can guess what was the problem by only using
+   the status code. Each of the status code are classified using their
+   first digit, each corresponding to:
+
+
+
+
+Ducoeur, et al.              Standards Track                    [Page 7]
+
+RFC nnnn                           SPX                        March 2018
+
+
+      1xx : SUCCESS
+
+      2xx : ERROR
+
+         Code 100 : Indicate that the request has succeeded.
+
+         Code 101 : Indicate that the request has been fulfilled and
+                    has resulted in the creation of a new content on the
+                    server
+
+         Code 200 : Indicate that the request didn't succeeded due to a
+                    conflict between what was requested and a resource
+                    already present on the server.
+
+         Code 201 : The target of the request was not found on the
+                    the server
+
+         Code 202 : The server has recognized the command but doesn't
+                    want to allow it to happen.
+
+8. Example SPX session
+
+   S: <wait for connection on TCP port 5555>
+   C: <connection>
+   S:   100 serv SPX ready
+   C:   NAME A
+   S:   200 name taken
+   C:   NAME TestName
+   S:   101 Your name is TestName
+   S: <send map> select a starting Location
+   C:   SELECT 1 2
+   S:   101 Placed on 1 2
+   S: <send map>
+   C:   MOVE
+   S:   100 moved to (1,1), 1 ressources on your location
+   S: <send map>
+   C:   STATUS
+   S:   100 A 3 resources, B 2 Resources, TestName 1 resources
+   C:   EXIT
+   S:   100 exiting server ..
+   C: <close connection>
+   S: <wait for next connection>
+
+
+
+
+
+
+
+
+
+
+Ducoeur, et al.              Standards Track                    [Page 8]
